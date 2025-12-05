@@ -1,3 +1,4 @@
+
 import React, { useContext } from 'react';
 import { HashRouter, Routes, Route, Outlet, Navigate, useLocation } from 'react-router-dom';
 
@@ -9,6 +10,7 @@ import CropDetailsPage from './pages/CropDetailsPage';
 import SubmitOfferPage from './pages/SubmitOfferPage';
 import WalletPage from './pages/WalletPage';
 import ProfilePage from './pages/ProfilePage';
+import EditProfilePage from './pages/EditProfilePage';
 import WelcomePage from './pages/WelcomePage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
@@ -53,6 +55,7 @@ const AppRoutes: React.FC = () => {
                     <Route path="/list-crop" element={<ListCropPage />} />
                     <Route path="/wallet" element={<WalletPage />} />
                     <Route path="/profile" element={<ProfilePage />} />
+                    <Route path="/profile/edit" element={<EditProfilePage />} />
                     <Route path="/settings" element={<SettingsPage />} />
                     <Route path="*" element={<Navigate to="/market" replace />} />
                 </Route>

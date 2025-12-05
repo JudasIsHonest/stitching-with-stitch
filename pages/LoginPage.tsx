@@ -1,3 +1,4 @@
+
 import React, { useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import Header from '../components/Header';
@@ -27,7 +28,7 @@ const LoginPage: React.FC = () => {
                                 type="email"
                                 className="form-input w-full rounded-xl text-text-light-primary dark:text-text-dark-primary focus:ring-2 focus:ring-primary/50 border-border-light dark:border-border-dark bg-card-light dark:bg-card-dark focus:border-primary h-14 px-4"
                                 placeholder="you@example.com"
-                                defaultValue="jordan.c@example.com"
+                                defaultValue="ajayi.o@example.com"
                                 required
                             />
                         </label>

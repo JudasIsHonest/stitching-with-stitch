@@ -34,13 +34,16 @@ const ProfilePage: React.FC = () => {
     useEffect(() => {
         const loadData = async () => {
             setLoading(true);
-            const data = await fetchAppData();
-            if (data?.userProfile) {
-                const savedAvatar = localStorage.getItem('userProfileAvatar');
-                if (savedAvatar) {
-                    data.userProfile.avatar = savedAvatar;
+            const savedProfile = localStorage.getItem('userProfile');
+            if (savedProfile) {
+                setProfile(JSON.parse(savedProfile));
+            } else {
+                const data = await fetchAppData();
+                if (data?.userProfile) {
+                    setProfile(data.userProfile);
+                    // Also save fetched profile to local storage
+                    localStorage.setItem('userProfile', JSON.stringify(data.userProfile));
                 }
-                setProfile(data.userProfile);
             }
             setLoading(false);
         };
@@ -57,8 +60,9 @@ const ProfilePage: React.FC = () => {
             const reader = new FileReader();
             reader.onloadend = () => {
                 const newAvatarUrl = reader.result as string;
-                setProfile({ ...profile, avatar: newAvatarUrl });
-                localStorage.setItem('userProfileAvatar', newAvatarUrl);
+                const updatedProfile = { ...profile, avatar: newAvatarUrl };
+                setProfile(updatedProfile);
+                localStorage.setItem('userProfile', JSON.stringify(updatedProfile));
             };
             reader.readAsDataURL(file);
         }
@@ -93,7 +97,7 @@ const ProfilePage: React.FC = () => {
                             <p className="text-[22px] font-bold text-text-light-primary dark:text-text-dark-primary">{profile.name}</p>
                             <p className="text-base text-text-light-secondary dark:text-text-dark-secondary">{profile.title}</p>
                         </div>
-                        <Button3D className="w-full">Edit Profile</Button3D>
+                        <Button3D onClick={() => navigate('/profile/edit', { state: { profile } })} className="w-full">Edit Profile</Button3D>
                     </div>
 
                     <div className="flex flex-col gap-6">

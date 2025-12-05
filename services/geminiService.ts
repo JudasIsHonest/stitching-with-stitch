@@ -1,99 +1,18 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { AppData, CropDetails } from '../types';
 
 const fetchAppData = async (): Promise<AppData | null> => {
     try {
-        if (!process.env.API_KEY) {
-            throw new Error("API_KEY environment variable not set");
+        const response = await fetch('/api/data');
+        if (!response.ok) {
+            console.error("Failed to fetch from server, using fallback.");
+            return getFallbackData();
         }
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        
-        const response = await ai.models.generateContent({
-            model: "gemini-3-pro-preview",
-            contents: `
-                Generate a complete JSON object for a cash crop trading app. The root object should be of type AppData.
-                - Create 20 unique 'marketListings' of type 'CropListing'. Include a diverse mix of global and African cash crops. For example: Cocoa from Ghana (country: "Ghana"), Coffee from Ethiopia (country: "Ethiopia"), Cashew nuts from Ivory Coast (country: "Ivory Coast"), Nigerian Ginger (country: "Nigeria"), Tanzanian Cashews (country: "Tanzania"), Tea from Kenya (country: "Kenya"), Cotton from Egypt (country: "Egypt"), Hard Red Wheat from USA (country: "USA"), Soybeans from Brazil (country: "Brazil"), and Canola from Canada (country: "Canada"). Make prices realistic in Nigerian Naira (₦) (e.g., price per bushel or ton). Include a 'country' field for each listing.
-                - For each of the 20 listings, create a corresponding 'cropDetails' entry. The key should be the listing's id. Populate all fields of 'CropDetails', including the 'country' field, a seller with a plausible name and rating, and detailed specifications. Use picsum.photos for image URLs.
-                - Create a 'userProfile' of type 'UserProfile' for a farmer named Jordan Campbell.
-                - Create a 'wallet' object with a realistic 'balance' in Naira and 6 sample 'transactions' of type 'Transaction'.
-                Ensure the entire output is a single, valid JSON object that strictly adheres to the provided schema.
-            `,
-            config: {
-                responseMimeType: "application/json",
-                responseSchema: {
-                    type: Type.OBJECT,
-                    properties: {
-                        marketListings: {
-                            type: Type.ARRAY,
-                            items: {
-                                type: Type.OBJECT,
-                                properties: {
-                                    id: { type: Type.STRING },
-                                    name: { type: Type.STRING },
-                                    farm: { type: Type.STRING },
-                                    region: { type: Type.STRING },
-                                    country: { type: Type.STRING },
-                                    postedTime: { type: Type.STRING },
-                                    price: { type: Type.NUMBER },
-                                    priceUnit: { type: Type.STRING },
-                                    priceChange: { type: Type.NUMBER },
-                                    image: { type: Type.STRING },
-                                    grade: { type: Type.STRING },
-                                },
-                            },
-                        },
-                        cropDetails: {
-                            type: Type.OBJECT,
-                        },
-                        userProfile: {
-                            type: Type.OBJECT,
-                            properties: {
-                                name: { type: Type.STRING },
-                                title: { type: Type.STRING },
-                                avatar: { type: Type.STRING },
-                                email: { type: Type.STRING },
-                                phone: { type: Type.STRING },
-                                location: { type: Type.STRING },
-                                farm: {
-                                    type: Type.OBJECT,
-                                    properties: {
-                                        name: { type: Type.STRING },
-                                        reg: { type: Type.STRING },
-                                        crops: { type: Type.STRING },
-                                    },
-                                },
-                            },
-                        },
-                        wallet: {
-                            type: Type.OBJECT,
-                            properties: {
-                                balance: { type: Type.NUMBER },
-                                transactions: {
-                                    type: Type.ARRAY,
-                                    items: {
-                                        type: Type.OBJECT,
-                                        properties: {
-                                            id: { type: Type.STRING },
-                                            type: { type: Type.STRING },
-                                            title: { type: Type.STRING },
-                                            date: { type: Type.STRING },
-                                            amount: { type: Type.NUMBER },
-                                        },
-                                    },
-                                },
-                            },
-                        },
-                    },
-                },
-            },
-        });
-        
-        if (response.text) {
-             return JSON.parse(response.text) as AppData;
-        }
-        return null;
+        const data = await response.json();
+        return data as AppData;
     } catch (error) {
-        console.error("Error fetching app data from Gemini:", error);
+        console.error("Error fetching app data from server:", error);
         return getFallbackData();
     }
 };
@@ -135,8 +54,17 @@ const getFallbackData = (): AppData => {
             },
         },
         userProfile: {
-            name: "Jordan Campbell", title: "Farmer", avatar: "https://picsum.photos/seed/user/200", email: "jordan.c@example.com", phone: "(555) 123-4567", location: "Saskatoon, SK",
-            farm: { name: "Campbell Family Farms", reg: "Reg# 987654321", crops: "Canola, Wheat" }
+            name: "AJAYI OLALEKAN",
+            title: "Farmer",
+            avatar: "https://picsum.photos/seed/user/200",
+            email: "ajayi.o@example.com",
+            phone: "+234 801 234 5678",
+            location: "Lagos, NG",
+            farm: {
+                name: "Olalekan Farms",
+                reg: "Reg# 123456789",
+                crops: "Ginger, Cocoa"
+            }
         },
         wallet: {
             balance: 1500000.75,
@@ -147,67 +75,30 @@ const getFallbackData = (): AppData => {
 
 export const getAiMarketAnalysis = async (crop: CropDetails): Promise<string> => {
     try {
-        if (!process.env.API_KEY) throw new Error("API_KEY not set");
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
-        const prompt = `
-            You are a senior agricultural market analyst.
-            Based on the following cash crop details, provide a brief market analysis and a price trend prediction in 2-3 sentences.
-            Be insightful but concise.
-
-            Crop: ${crop.name}
-            Origin: ${crop.origin}
-            Asking Price: ₦${crop.price.toLocaleString('en-US')} ${crop.priceUnit}
-            Specifications: ${crop.specifications.map(s => `${s.label}: ${s.value}`).join(', ')}
-
-            Assume current global market conditions are stable with slight volatility in the agricultural sector due to weather uncertainties. The currency is Nigerian Naira (₦).
-        `;
-
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: prompt,
+        const response = await fetch('/api/analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ crop }),
         });
-
-        return response.text ?? "No analysis available at this time.";
-
+        if (!response.ok) return "Could not generate analysis due to a server error.";
+        const { analysis } = await response.json();
+        return analysis || "No analysis available at this time.";
     } catch (error) {
         console.error("Error fetching AI market analysis:", error);
-        return "Could not generate analysis due to an error.";
+        return "Could not generate analysis due to a network error.";
     }
 };
 
 export const getAiOfferSuggestion = async (crop: CropDetails): Promise<number | null> => {
-    try {
-        if (!process.env.API_KEY) throw new Error("API_KEY not set");
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        
-        const prompt = `
-            Given that ${crop.name} has an asking price of ₦${crop.price.toLocaleString('en-US')} ${crop.priceUnit}, suggest a competitive but fair counter-offer price per unit in Nigerian Naira (₦).
-            Consider that a slight negotiation is standard in this market. The suggested price should be slightly lower than the asking price but not insultingly low.
-            Output only the numeric value for the price.
-        `;
-
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: prompt,
-            config: {
-                responseMimeType: "application/json",
-                responseSchema: {
-                    type: Type.OBJECT,
-                    properties: {
-                        suggestedPrice: { type: Type.NUMBER },
-                    },
-                    required: ["suggestedPrice"],
-                },
-            },
+     try {
+        const response = await fetch('/api/suggest', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ crop }),
         });
-
-        if (response.text) {
-            const parsed = JSON.parse(response.text);
-            return parsed.suggestedPrice || null;
-        }
-        return null;
-
+        if (!response.ok) return null;
+        const { suggestedPrice } = await response.json();
+        return suggestedPrice || null;
     } catch (error) {
         console.error("Error fetching AI offer suggestion:", error);
         return null;
