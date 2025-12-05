@@ -26,83 +26,28 @@ const getAppDataPrompt = `
     Ensure the entire output is a single, valid JSON object that strictly adheres to the provided schema.
 `;
 
-const getAppDataSchema = {
-    type: Type.OBJECT,
-    properties: {
-        marketListings: {
-            type: Type.ARRAY,
-            items: {
-                type: Type.OBJECT,
-                properties: {
-                    id: { type: Type.STRING }, name: { type: Type.STRING }, farm: { type: Type.STRING }, region: { type: Type.STRING }, country: { type: Type.STRING }, postedTime: { type: Type.STRING }, price: { type: Type.NUMBER }, priceUnit: { type: Type.STRING }, priceChange: { type: Type.NUMBER }, image: { type: Type.STRING }, grade: { type: Type.STRING },
-                },
-            },
-        },
-        cropDetails: {
-            type: Type.ARRAY,
-            items: {
-                type: Type.OBJECT,
-                properties: {
-                    id: { type: Type.STRING }, name: { type: Type.STRING }, farm: { type: Type.STRING }, region: { type: Type.STRING }, country: { type: Type.STRING }, postedTime: { type: Type.STRING }, price: { type: Type.NUMBER }, priceUnit: { type: Type.STRING }, priceChange: { type: Type.NUMBER }, image: { type: Type.STRING }, grade: { type: Type.STRING }, origin: { type: Type.STRING }, available: { type: Type.STRING }, images: { type: Type.ARRAY, items: { type: Type.STRING } },
-                    seller: {
-                        type: Type.OBJECT,
-                        properties: { name: { type: Type.STRING }, avatar: { type: Type.STRING }, rating: { type: Type.NUMBER }, reviews: { type: Type.NUMBER }, },
-                    },
-                    specifications: {
-                        type: Type.ARRAY,
-                        items: {
-                            type: Type.OBJECT,
-                            properties: { label: { type: Type.STRING }, value: { type: Type.STRING }, },
-                        },
-                    },
-                    description: { type: Type.STRING },
-                },
-            },
-        },
-        userProfile: {
-            type: Type.OBJECT,
-            properties: {
-                name: { type: Type.STRING }, title: { type: Type.STRING }, avatar: { type: Type.STRING }, email: { type: Type.STRING }, phone: { type: Type.STRING }, location: { type: Type.STRING },
-                farm: {
-                    type: Type.OBJECT,
-                    properties: { name: { type: Type.STRING }, reg: { type: Type.STRING }, crops: { type: Type.STRING }, },
-                },
-            },
-        },
-        wallet: {
-            type: Type.OBJECT,
-            properties: {
-                balance: { type: Type.NUMBER },
-                transactions: {
-                    type: Type.ARRAY,
-                    items: {
-                        type: Type.OBJECT,
-                        properties: { id: { type: Type.STRING }, type: { type: Type.STRING }, title: { type: Type.STRING }, date: { type: Type.STRING }, amount: { type: Type.NUMBER }, },
-                    },
-                },
-            },
-        },
-    },
-};
-
-
 app.get('/api/data', async (req, res) => {
     try {
         if (!process.env.API_KEY) {
             throw new Error("API_KEY environment variable not set on server");
         }
         
+        // Made the call more robust by removing strict config and parsing text
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
             contents: getAppDataPrompt,
-            config: {
-                responseMimeType: "application/json",
-                responseSchema: getAppDataSchema,
-            },
         });
         
         if (response.text) {
-            const rawData = JSON.parse(response.text);
+            let cleanedText = response.text.trim();
+            if (cleanedText.startsWith('```json')) {
+                cleanedText = cleanedText.substring(7, cleanedText.length - 3).trim();
+            } else if (cleanedText.startsWith('```')) {
+                 cleanedText = cleanedText.substring(3, cleanedText.length - 3).trim();
+            }
+
+            const rawData = JSON.parse(cleanedText);
+            
             // Transform cropDetails array into a map
             const cropDetailsMap = rawData.cropDetails.reduce((acc, detail) => {
                 acc[detail.id] = detail;

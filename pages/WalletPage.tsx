@@ -1,4 +1,6 @@
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Transaction } from '../types';
 import fetchAppData from '../services/geminiService';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -21,7 +23,6 @@ const TransactionIcon: React.FC<{ type: Transaction['type'] }> = ({ type }) => {
 
 const useAnimatedCounter = (endValue: number) => {
     const [count, setCount] = useState(0);
-    // FIX: Initialize useRef with null to satisfy overloads that expect an argument.
     const frameRef = useRef<number | null>(null);
 
     useEffect(() => {
@@ -60,6 +61,7 @@ const WalletPage: React.FC = () => {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
     const animatedBalance = useAnimatedCounter(balance || 0);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const loadData = async () => {
@@ -102,11 +104,11 @@ const WalletPage: React.FC = () => {
                     </div>
 
                     <div className="flex justify-stretch py-5 gap-4">
-                        <Button3D className="flex-1">
+                        <Button3D className="flex-1" onClick={() => navigate('/deposit')}>
                             <span className="material-symbols-outlined !text-xl mr-2">add</span>
                             Deposit
                         </Button3D>
-                        <Button3D className="flex-1" variant="secondary">
+                        <Button3D className="flex-1" variant="secondary" onClick={() => navigate('/withdraw')}>
                              <span className="material-symbols-outlined !text-xl mr-2">remove</span>
                             Withdraw
                         </Button3D>

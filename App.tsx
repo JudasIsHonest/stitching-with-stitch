@@ -1,4 +1,6 @@
 
+
+
 import React, { useContext } from 'react';
 import { HashRouter, Routes, Route, Outlet, Navigate, useLocation } from 'react-router-dom';
 
@@ -16,6 +18,9 @@ import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import SettingsPage from './pages/SettingsPage';
 import ListCropPage from './pages/ListCropPage';
+import DepositPage from './pages/DepositPage';
+import WithdrawPage from './pages/WithdrawPage';
+import DepositMethodPage from './pages/DepositMethodPage';
 
 // Layout for main app pages after login
 const MainLayout: React.FC = () => {
@@ -54,6 +59,9 @@ const AppRoutes: React.FC = () => {
                     <Route path="/offer/:id" element={<SubmitOfferPage />} />
                     <Route path="/list-crop" element={<ListCropPage />} />
                     <Route path="/wallet" element={<WalletPage />} />
+                    <Route path="/deposit" element={<DepositPage />} />
+                    <Route path="/deposit/:method" element={<DepositMethodPage />} />
+                    <Route path="/withdraw" element={<WithdrawPage />} />
                     <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/profile/edit" element={<EditProfilePage />} />
                     <Route path="/settings" element={<SettingsPage />} />
