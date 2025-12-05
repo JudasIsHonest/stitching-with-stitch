@@ -1,0 +1,5 @@
+{
+  "name": "Copy of AgroTrade - Cash Crop Marketplace",
+  "description": "A modern, mobile-first dashboard for browsing cash crop market listings, viewing detailed specifications, and submitting trade offers. Features a full authentication flow, real-time data, user wallet, and profile management.",
+  "requestFramePermissions": []
+}
