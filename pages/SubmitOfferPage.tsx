@@ -4,6 +4,8 @@ import { CropDetails } from '../types';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Header from '../components/Header';
 import Button3D from '../components/Button3D';
+import { getAiOfferSuggestion } from '../services/geminiService';
+
 
 const SubmitOfferPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -15,6 +17,8 @@ const SubmitOfferPage: React.FC = () => {
     const [quantity, setQuantity] = useState(10);
     const [offerPrice, setOfferPrice] = useState('');
     const [status, setStatus] = useState<'idle' | 'loading' | 'success'>('idle');
+    const [isSuggesting, setIsSuggesting] = useState(false);
+
 
     useEffect(() => {
         if (!details) {
@@ -25,6 +29,16 @@ const SubmitOfferPage: React.FC = () => {
 
     const handleQuantityChange = (amount: number) => {
         setQuantity(prev => Math.max(1, prev + amount));
+    };
+    
+    const handleAiSuggestion = async () => {
+        if (!details) return;
+        setIsSuggesting(true);
+        const suggestedPrice = await getAiOfferSuggestion(details);
+        if (suggestedPrice) {
+            setOfferPrice(suggestedPrice.toFixed(2));
+        }
+        setIsSuggesting(false);
     };
 
     const platformFeeRate = 0.01;
@@ -53,7 +67,7 @@ const SubmitOfferPage: React.FC = () => {
 
     if (status === 'success') {
         return (
-            <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-8">
+            <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-8 animate-scaleIn">
                 <div className="flex flex-col items-center gap-4 bg-card-light dark:bg-card-dark p-8 rounded-2xl w-full max-w-sm text-center">
                     <div className="flex items-center justify-center size-16 rounded-full bg-primary text-white">
                         <span className="material-symbols-outlined !text-4xl">check_circle</span>
@@ -76,13 +90,13 @@ const SubmitOfferPage: React.FC = () => {
 
     return (
         <div className="flex flex-col">
-            <Header title="Submit Trade Offer" showBackButton onBack={() => navigate(-1)} />
+            <Header title="Make an Offer" showBackButton onBack={() => navigate(-1)} />
 
-            <div className="flex-grow px-4 pt-4 pb-28">
+            <div className="flex-grow px-4 pt-4 pb-28 animate-fadeInUp" style={{ animationDelay: '200ms' }}>
                 <div className="mb-6 rounded-2xl bg-card-light dark:bg-card-dark p-4">
                     <div className="flex items-start justify-between gap-4">
                         <div className="flex flex-col gap-1 flex-1">
-                            <p className="text-text-light-secondary dark:text-text-dark-secondary text-sm">Asking: ${details.price.toFixed(2)} {details.priceUnit}</p>
+                            <p className="text-text-light-secondary dark:text-text-dark-secondary text-sm">Asking: ₦{details.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {details.priceUnit}</p>
                             <p className="text-text-light-primary dark:text-text-dark-primary text-base font-bold">{details.name}</p>
                             <p className="text-text-light-secondary dark:text-text-dark-secondary text-sm">Seller: {details.seller.name}</p>
                         </div>
@@ -107,9 +121,29 @@ const SubmitOfferPage: React.FC = () => {
                     
                     <div>
                         <label className="flex flex-col">
-                            <p className="text-text-light-primary dark:text-text-dark-primary text-base font-medium pb-2">Your Offer per Unit</p>
+                            <div className="flex justify-between items-center pb-2">
+                                <p className="text-text-light-primary dark:text-text-dark-primary text-base font-medium">Your Offer per Unit</p>
+                                <button
+                                    type="button"
+                                    onClick={handleAiSuggestion}
+                                    disabled={isSuggesting}
+                                    className="flex items-center gap-1.5 text-primary font-bold text-sm px-2 py-1 rounded-full hover:bg-primary/10 transition-colors disabled:opacity-50"
+                                >
+                                    {isSuggesting ? (
+                                        <>
+                                            <div className="w-4 h-4 border-2 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+                                            <span>Getting...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span className="material-symbols-outlined !text-base">auto_awesome</span>
+                                            <span>Suggest Offer</span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
                             <div className="relative">
-                                <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-text-light-secondary dark:text-text-dark-secondary">$</span>
+                                <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-text-light-secondary dark:text-text-dark-secondary">₦</span>
                                 <input
                                     className="form-input w-full rounded-xl text-text-light-primary dark:text-text-dark-primary focus:ring-2 focus:ring-primary/50 border-border-light dark:border-border-dark bg-card-light dark:bg-card-dark focus:border-primary h-16 pl-8 pr-4"
                                     placeholder={details.price.toFixed(2)}
@@ -124,9 +158,9 @@ const SubmitOfferPage: React.FC = () => {
                     </div>
 
                     <div className="mt-8 pt-6 border-t border-border-light dark:border-border-dark">
-                        <div className="flex justify-between py-2"><p className="text-text-light-secondary dark:text-text-dark-secondary text-sm">Total Offer Value</p><p className="text-text-light-primary dark:text-text-dark-primary font-bold">${totalOfferValue.toFixed(2)}</p></div>
-                        <div className="flex justify-between py-2"><p className="text-text-light-secondary dark:text-text-dark-secondary text-sm">Platform Fee (1%)</p><p className="text-text-light-primary dark:text-text-dark-primary">${platformFee.toFixed(2)}</p></div>
-                        <div className="flex justify-between py-2 mt-2 border-t border-border-light dark:border-border-dark"><p className="font-bold text-text-light-primary dark:text-text-dark-primary">Total</p><p className="text-primary font-bold text-lg">${total.toFixed(2)}</p></div>
+                        <div className="flex justify-between py-2"><p className="text-text-light-secondary dark:text-text-dark-secondary text-sm">Total Offer Value</p><p className="text-text-light-primary dark:text-text-dark-primary font-bold">₦{totalOfferValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p></div>
+                        <div className="flex justify-between py-2"><p className="text-text-light-secondary dark:text-text-dark-secondary text-sm">Platform Fee (1%)</p><p className="text-text-light-primary dark:text-text-dark-primary">₦{platformFee.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p></div>
+                        <div className="flex justify-between py-2 mt-2 border-t border-border-light dark:border-border-dark"><p className="font-bold text-text-light-primary dark:text-text-dark-primary">Total</p><p className="text-primary font-bold text-lg">₦{total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p></div>
                     </div>
 
                     <div className="fixed bottom-0 left-0 right-0 p-4 mx-auto max-w-md bg-background-light/90 dark:bg-background-dark/90 border-t border-border-light dark:border-border-dark backdrop-blur-sm">

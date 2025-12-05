@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserProfile } from '../types';
 import fetchAppData from '../services/geminiService';
@@ -29,18 +29,41 @@ const ProfilePage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
     const { logout } = useContext(AuthContext);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         const loadData = async () => {
             setLoading(true);
             const data = await fetchAppData();
             if (data?.userProfile) {
+                const savedAvatar = localStorage.getItem('userProfileAvatar');
+                if (savedAvatar) {
+                    data.userProfile.avatar = savedAvatar;
+                }
                 setProfile(data.userProfile);
             }
             setLoading(false);
         };
         loadData();
     }, []);
+    
+    const handleAvatarClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file && profile) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const newAvatarUrl = reader.result as string;
+                setProfile({ ...profile, avatar: newAvatarUrl });
+                localStorage.setItem('userProfileAvatar', newAvatarUrl);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
 
     return (
         <div className="flex flex-col">
@@ -51,9 +74,21 @@ const ProfilePage: React.FC = () => {
             ) : !profile ? (
                 <div className="text-center p-8 text-price-decrease">Could not load profile.</div>
             ) : (
-                <main className="flex-1 px-4 pb-8">
+                <main className="flex-1 px-4 pb-8 animate-fadeInUp" style={{ animationDelay: '200ms' }}>
                     <div className="flex w-full flex-col items-center gap-4 py-6">
-                        <img className="rounded-full h-32 w-32 object-cover" src={profile.avatar} alt={profile.name} />
+                        <div className="relative group cursor-pointer" onClick={handleAvatarClick}>
+                            <img className="rounded-full h-32 w-32 object-cover" src={profile.avatar} alt={profile.name} />
+                            <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <span className="material-symbols-outlined text-white !text-4xl">photo_camera</span>
+                            </div>
+                        </div>
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleFileChange}
+                            className="hidden"
+                            accept="image/*"
+                        />
                         <div className="flex flex-col items-center justify-center">
                             <p className="text-[22px] font-bold text-text-light-primary dark:text-text-dark-primary">{profile.name}</p>
                             <p className="text-base text-text-light-secondary dark:text-text-dark-secondary">{profile.title}</p>

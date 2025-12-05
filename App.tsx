@@ -1,7 +1,8 @@
 import React, { useContext } from 'react';
-import { HashRouter, Routes, Route, Outlet, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Outlet, Navigate, useLocation } from 'react-router-dom';
 
 import { AuthProvider, AuthContext } from './auth/AuthContext';
+import { NotificationProvider } from './context/NotificationContext';
 import BottomNav from './components/BottomNav';
 import MarketPage from './pages/MarketPage';
 import CropDetailsPage from './pages/CropDetailsPage';
@@ -12,17 +13,21 @@ import WelcomePage from './pages/WelcomePage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import SettingsPage from './pages/SettingsPage';
+import ListCropPage from './pages/ListCropPage';
 
 // Layout for main app pages after login
-const MainLayout: React.FC = () => (
-    <div className="relative mx-auto flex h-auto min-h-screen w-full max-w-md flex-col overflow-x-hidden bg-background-light dark:bg-background-dark">
-        <div className="noise-bg"></div>
-        <main className="flex-1 pb-24">
-            <Outlet />
-        </main>
-        <BottomNav />
-    </div>
-);
+const MainLayout: React.FC = () => {
+    const location = useLocation();
+    return (
+        <div className="relative mx-auto flex h-auto min-h-screen w-full max-w-md flex-col overflow-x-hidden bg-background-light dark:bg-background-dark">
+            <div className="noise-bg"></div>
+            <main key={location.pathname} className="flex-1 pb-24 animate-slideInFromRight">
+                <Outlet />
+            </main>
+            <BottomNav />
+        </div>
+    );
+};
 
 // Layout for authentication pages
 const AuthLayout: React.FC = () => (
@@ -45,6 +50,7 @@ const AppRoutes: React.FC = () => {
                     <Route path="/market" element={<MarketPage />} />
                     <Route path="/details/:id" element={<CropDetailsPage />} />
                     <Route path="/offer/:id" element={<SubmitOfferPage />} />
+                    <Route path="/list-crop" element={<ListCropPage />} />
                     <Route path="/wallet" element={<WalletPage />} />
                     <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/settings" element={<SettingsPage />} />
@@ -66,9 +72,11 @@ const AppRoutes: React.FC = () => {
 const App: React.FC = () => {
     return (
         <AuthProvider>
-            <HashRouter>
-                <AppRoutes />
-            </HashRouter>
+            <NotificationProvider>
+                <HashRouter>
+                    <AppRoutes />
+                </HashRouter>
+            </NotificationProvider>
         </AuthProvider>
     );
 };

@@ -32,7 +32,7 @@ const SettingsPage: React.FC = () => {
     return (
         <div className="flex flex-col">
             <Header title="Settings" showBackButton onBack={() => navigate(-1)} />
-            <main className="flex-1 px-4 py-6">
+            <main className="flex-1 px-4 py-6 animate-fadeInUp" style={{ animationDelay: '200ms' }}>
                 <div className="flex flex-col gap-6">
                     <div className="flex flex-col gap-2">
                         <h2 className="px-2 text-sm font-semibold uppercase text-text-light-secondary dark:text-text-dark-secondary tracking-wider">Notifications</h2>

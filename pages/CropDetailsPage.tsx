@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { CropDetails } from '../types';
-import fetchAppData from '../services/geminiService';
+import fetchAppData, { getAiMarketAnalysis } from '../services/geminiService';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Header from '../components/Header';
 import Button3D from '../components/Button3D';
@@ -27,6 +27,9 @@ const CropDetailsPage: React.FC = () => {
     const navigate = useNavigate();
     const [details, setDetails] = useState<CropDetails | null>(null);
     const [loading, setLoading] = useState(true);
+    const [analysis, setAnalysis] = useState<string | null>(null);
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
+
 
     useEffect(() => {
         const loadDetails = async () => {
@@ -41,6 +44,15 @@ const CropDetailsPage: React.FC = () => {
         };
         loadDetails();
     }, [id]);
+    
+    const handleAnalyze = async () => {
+        if (!details) return;
+        setIsAnalyzing(true);
+        setAnalysis(null);
+        const result = await getAiMarketAnalysis(details);
+        setAnalysis(result);
+        setIsAnalyzing(false);
+    };
 
     if (loading) {
         return (
@@ -64,7 +76,7 @@ const CropDetailsPage: React.FC = () => {
         <div className="relative flex min-h-screen w-full flex-col">
             <Header title={details.name} showBackButton onBack={() => navigate(-1)} />
 
-            <div className="flex-grow pb-28">
+            <div className="flex-grow pb-28 animate-fadeInUp" style={{ animationDelay: '200ms' }}>
                 <div className="px-4">
                     <div
                         className="relative bg-cover bg-center flex min-h-80 flex-col justify-end overflow-hidden rounded-2xl"
@@ -78,7 +90,7 @@ const CropDetailsPage: React.FC = () => {
                         <p className="pt-1 text-base font-normal leading-normal text-text-light-secondary dark:text-text-dark-secondary">{details.origin}</p>
                         <div className="mt-4 flex items-baseline justify-between">
                             <h2 className="text-3xl font-bold leading-tight text-primary dark:text-primary">
-                                ${details.price.toFixed(2)} <span className="text-base font-medium text-text-light-secondary dark:text-text-dark-secondary">{details.priceUnit}</span>
+                                ₦{details.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-base font-medium text-text-light-secondary dark:text-text-dark-secondary">{details.priceUnit}</span>
                             </h2>
                             <p className="text-base font-medium text-text-light-secondary dark:text-text-dark-secondary">{details.available}</p>
                         </div>
@@ -109,6 +121,32 @@ const CropDetailsPage: React.FC = () => {
                         ))}
                     </div>
                 </div>
+
+                <div className="px-4 pt-5">
+                    <div className="flex items-center justify-between">
+                        <h3 className="px-1 text-xl font-bold text-text-light-primary dark:text-text-dark-primary">AI Analysis</h3>
+                        <button
+                            onClick={handleAnalyze}
+                            disabled={isAnalyzing}
+                            className="flex items-center gap-2 text-primary font-bold text-sm px-3 py-1 rounded-full hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:cursor-wait"
+                        >
+                            <span className="material-symbols-outlined !text-base">auto_awesome</span>
+                            {isAnalyzing ? "Analyzing..." : (analysis ? "Re-analyze" : "Analyze")}
+                        </button>
+                    </div>
+                    <div className="mt-3 rounded-2xl border border-primary/20 bg-primary/5 p-4 dark:border-primary/30 dark:bg-card-dark min-h-[6rem] flex items-center">
+                        {isAnalyzing ? (
+                            <div className="flex items-center gap-3 text-text-light-secondary dark:text-text-dark-secondary">
+                                <div className="w-5 h-5 border-2 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+                                <span>Analyzing market trends...</span>
+                            </div>
+                        ) : analysis ? (
+                            <p className="text-base text-text-light-primary dark:text-text-dark-primary leading-relaxed">{analysis}</p>
+                        ) : (
+                            <p className="text-sm text-text-light-secondary dark:text-text-dark-secondary">Click "Analyze" to get AI-powered market insights and price trend predictions for this crop.</p>
+                        )}
+                    </div>
+                </div>
                 
                 <div className="px-4 pt-5">
                      <h3 className="px-1 text-xl font-bold text-text-light-primary dark:text-text-dark-primary">Description</h3>
@@ -118,7 +156,7 @@ const CropDetailsPage: React.FC = () => {
 
             <footer className="fixed bottom-0 z-20 w-full max-w-md border-t border-border-light bg-background-light/90 p-4 backdrop-blur-sm dark:border-border-dark dark:bg-background-dark/90">
                 <Button3D onClick={() => navigate(`/offer/${id}`, { state: { details }})} className="w-full">
-                    Start Trade
+                    Make an Offer
                 </Button3D>
             </footer>
         </div>

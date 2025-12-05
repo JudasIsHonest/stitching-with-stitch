@@ -3,6 +3,7 @@ export interface CropListing {
   name: string;
   farm: string;
   region: string;
+  country: string;
   postedTime: string;
   price: number;
   priceUnit: string;
@@ -64,4 +65,11 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   login: () => void;
   logout: () => void;
+}
+
+export interface PriceAlert {
+  cropId: string;
+  cropName: string;
+  targetPrice: number;
+  condition: 'above' | 'below';
 }
